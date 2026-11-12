@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Local overrides (paths). See PetPatch.user.props. -->
+	<Import Project="PetPatch.user.props" Condition="Exists('PetPatch.user.props')" />
+
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<OutputType>Library</OutputType>
+		<AssemblyName>PetPatch</AssemblyName>
+		<RootNamespace>PetPatch</RootNamespace>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ValheimInstall Condition="'$(ValheimInstall)' == ''">$(VALHEIM_INSTALL)</ValheimInstall>
+		<ValheimInstall Condition="'$(ValheimInstall)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimInstall>
+		<ValheimInstall Condition="'$(ValheimInstall)' == '' AND $([MSBuild]::IsOSPlatform('Linux'))">$(HOME)/.local/share/Steam/steamapps/common/Valheim</ValheimInstall>
+		<ValheimManaged>$(ValheimInstall)/valheim_Data/Managed</ValheimManaged>
+
+		<BepInExProfile Condition="'$(BepInExProfile)' == ''">$(BEPINEX_PROFILE)</BepInExProfile>
+		<BepInExProfile Condition="'$(BepInExProfile)' == ''">$(ValheimInstall)/BepInEx</BepInExProfile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="BepInEx">
+			<HintPath>$(BepInExProfile)/core/BepInEx.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="0Harmony">
+			<HintPath>$(BepInExProfile)/core/0Harmony.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(ValheimManaged)/UnityEngine.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(ValheimManaged)/UnityEngine.CoreModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.PhysicsModule">
+			<HintPath>$(ValheimManaged)/UnityEngine.PhysicsModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="assembly_valheim">
+			<HintPath>$(ValheimManaged)/assembly_valheim.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="assembly_utils">
+			<HintPath>$(ValheimManaged)/assembly_utils.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+</Project>

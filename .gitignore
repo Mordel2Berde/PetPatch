@@ -1,0 +1,9 @@
+/bin
+/obj
+/Thunderstore
+*.lscache
+*.user.props
+*.csproj.user
+.vs/
+.vscode/
+.idea/
