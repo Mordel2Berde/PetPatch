@@ -33,13 +33,17 @@ its way, and lets its next movement settle the conflict.
 Instead of picking a new destination on a fixed schedule, a roaming pet now stays in place for a
 random time (5 to 45 s by default) after arriving or being interrupted.
 
+### Who is it following?
+The name of the followed player is shown after the name of a tamed creature, for example
+`Wolf -> Ragnar`. Every player sees it, whoever owns the creature.
+
 ## Configuration
 
 File: `BepInEx/config/Mordel2Berde.PetPatch.cfg`, or any in-game config manager.
 
 | Section | Setting | Default | Description |
 |---|---|---|---|
-| General | Enabled | true | Turns every feature on or off, live. |
+| General | Enabled | true | Turns every movement feature on or off, live. |
 | General | BodyMargin | 0.15 | Clearance added around the skeleton, in meters. |
 | General | ClearanceFactor | 1.1 | Multiplies the distance kept from obstacles. |
 | General | PushSpeed | 1.5 | Speed at which a clipping creature is moved out of an obstacle, in m/s. |
@@ -48,6 +52,7 @@ File: `BepInEx/config/Mordel2Berde.PetPatch.cfg`, or any in-game config manager.
 | General | IdleMaxSeconds | 45 | Maximum idle time after arriving or being interrupted. |
 | Traffic | StopForPlayers | true | Stop instead of pushing a player. |
 | Traffic | StopForPets | true | Stop instead of pushing another tamed creature. |
+| Display | ShowFollowedPlayer | true | Show the followed player's name after the creature's name. |
 | Debug | LogBodySizes | false | Log the body size measured for each tamed creature. |
 
 ## Multiplayer

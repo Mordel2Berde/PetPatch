@@ -15,7 +15,7 @@ namespace PetPatch
 	{
 		public const string PluginGUID    = "Mordel2Berde.PetPatch";
 		public const string PluginName    = "PetPatch";
-		public const string PluginVersion = "1.3.1";
+		public const string PluginVersion = "1.4.0";
 
 		internal static new BepInEx.Logging.ManualLogSource Logger = null!;
 
@@ -28,6 +28,7 @@ namespace PetPatch
 		internal static ConfigEntry<float> IdleMaxSeconds = null!;
 		internal static ConfigEntry<bool> StopForPlayers = null!;
 		internal static ConfigEntry<bool> StopForPets = null!;
+		internal static ConfigEntry<bool> ShowFollowedPlayer = null!;
 		internal static ConfigEntry<bool> LogBodySizes = null!;
 
 		private readonly Harmony _harmony = new Harmony(PluginGUID);
@@ -61,6 +62,8 @@ namespace PetPatch
 				"Tamed creatures stop instead of pushing a player standing in their way.");
 			StopForPets = Config.Bind("Traffic", "StopForPets", true,
 				"Tamed creatures stop instead of pushing another tamed creature standing in their way.");
+			ShowFollowedPlayer = Config.Bind("Display", "ShowFollowedPlayer", true,
+				"Show the name of the followed player after the name of a tamed creature: Wolf -> Ragnar.");
 			LogBodySizes = Config.Bind("Debug", "LogBodySizes", false,
 				"Log the body size measured for each tamed creature.");
 
@@ -222,6 +225,80 @@ namespace PetPatch
 			toTarget.y = 0f;
 			if (toTarget.magnitude > minDistance)
 				__instance.MoveTowards(toTarget, run: false);
+		}
+	}
+
+	/// <summary>
+	/// Shows the name of the followed player after the name of a tamed creature, above its
+	/// health bar and when aiming at it: "Wolf -> Ragnar".
+	///
+	/// The followed GameObject only exists on the owner of the creature, but the owner also writes
+	/// the player name to the ZDO, which every client receives. Reading it there makes the display
+	/// correct for all players, whoever simulates the creature.
+	/// </summary>
+	internal static class FollowedPlayer
+	{
+		private static readonly AccessTools.FieldRef<Character, ZNetView> NViewOf = AccessTools.FieldRefAccess<Character, ZNetView>("m_nview");
+
+		/// <summary>" -> PlayerName" if this tamed creature follows a player, "" otherwise.</summary>
+		internal static string Suffix(Character character)
+		{
+			if (!Plugin.ShowFollowedPlayer.Value || character == null || character.IsPlayer() || !character.IsTamed())
+				return "";
+			ZNetView nview = NViewOf(character);
+			if (nview == null || !nview.IsValid())
+				return "";
+			string follow = nview.GetZDO().GetString(ZDOVars.s_follow);
+			return string.IsNullOrEmpty(follow) ? "" : " -> " + follow;
+		}
+	}
+
+	/// <summary>
+	/// Name above the health bar. It is written by EnemyHud.UpdateHuds from GetHoverName, but
+	/// CLLC then overwrites it on each frame with a name it caches when the HUD appears. So the
+	/// suffix is appended to the final text, after every other patch.
+	/// </summary>
+	[HarmonyPatch(typeof(EnemyHud), "UpdateHuds")]
+	[HarmonyPriority(Priority.Last)]
+	[HarmonyAfter("org.bepinex.plugins.creaturelevelcontrol")]
+	internal static class FollowedPlayerHudPatch
+	{
+		private static readonly System.Reflection.FieldInfo HudsField = AccessTools.Field(typeof(EnemyHud), "m_huds");
+		private static readonly Type HudDataType = AccessTools.Inner(typeof(EnemyHud), "HudData");
+		private static readonly AccessTools.FieldRef<object, Character> CharacterOf = AccessTools.FieldRefAccess<Character>(HudDataType, "m_character");
+		private static readonly AccessTools.FieldRef<object, GameObject> GuiOf = AccessTools.FieldRefAccess<GameObject>(HudDataType, "m_gui");
+		private static readonly AccessTools.FieldRef<object, TMPro.TextMeshProUGUI> NameOf = AccessTools.FieldRefAccess<TMPro.TextMeshProUGUI>(HudDataType, "m_name");
+
+		private static void Postfix(EnemyHud __instance)
+		{
+			if (!Plugin.ShowFollowedPlayer.Value || !(HudsField.GetValue(__instance) is System.Collections.IDictionary huds))
+				return;
+			foreach (object hud in huds.Values)
+			{
+				GameObject gui = GuiOf(hud);
+				TMPro.TextMeshProUGUI name = NameOf(hud);
+				if (gui == null || !gui.activeSelf || name == null)
+					continue;
+				string suffix = FollowedPlayer.Suffix(CharacterOf(hud));
+				if (suffix.Length > 0 && !name.text.EndsWith(suffix))
+					name.text += suffix;
+			}
+		}
+	}
+
+	/// <summary>Text shown when aiming at the creature: "Wolf -> Ragnar ( Tame, Happy )".</summary>
+	[HarmonyPatch(typeof(Tameable), nameof(Tameable.GetHoverText))]
+	internal static class FollowedPlayerHoverPatch
+	{
+		private static void Postfix(Tameable __instance, ref string __result)
+		{
+			if (string.IsNullOrEmpty(__result))
+				return;
+			string suffix = FollowedPlayer.Suffix(__instance.GetComponent<Character>());
+			if (suffix.Length == 0)
+				return;
+			string name = __instance.GetName();
+			__result = __result.StartsWith(name) ? name + suffix + __result.Substring(name.Length) : __result;
 		}
 	}
 

@@ -48,6 +48,14 @@
 			<HintPath>$(ValheimManaged)/assembly_valheim.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(ValheimManaged)/Unity.TextMeshPro.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(ValheimManaged)/UnityEngine.UI.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
 		<Reference Include="assembly_utils">
 			<HintPath>$(ValheimManaged)/assembly_utils.dll</HintPath>
 			<Private>false</Private>
